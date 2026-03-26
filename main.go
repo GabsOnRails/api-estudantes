@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/GabsOnRails/api-estudantes/db"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
 )
@@ -18,16 +19,17 @@ type (
 )
 
 var (
-	users = map[int]*user{}
-	seq   = 1
-	lock  = sync.Mutex{}
+	students = map[int]*user{}
+	seq      = 1
+	lock     = sync.Mutex{}
 )
 
 //----------
 // Handlers
 //----------
 
-func createUser(c *echo.Context) error {
+func createStudent(c *echo.Context) error {
+	db.AddStudent()
 	lock.Lock()
 	defer lock.Unlock()
 	u := &user{
@@ -36,19 +38,19 @@ func createUser(c *echo.Context) error {
 	if err := c.Bind(u); err != nil {
 		return err
 	}
-	users[u.ID] = u
+	students[u.ID] = u
 	seq++
 	return c.JSON(http.StatusCreated, u)
 }
 
-func getUser(c *echo.Context) error {
+func getStudent(c *echo.Context) error {
 	lock.Lock()
 	defer lock.Unlock()
 	id, _ := strconv.Atoi(c.Param("id"))
-	return c.JSON(http.StatusOK, users[id])
+	return c.JSON(http.StatusOK, students[id])
 }
 
-func updateUser(c *echo.Context) error {
+func updateStudent(c *echo.Context) error {
 	lock.Lock()
 	defer lock.Unlock()
 	u := new(user)
@@ -56,22 +58,22 @@ func updateUser(c *echo.Context) error {
 		return err
 	}
 	id, _ := strconv.Atoi(c.Param("id"))
-	users[id].Name = u.Name
-	return c.JSON(http.StatusOK, users[id])
+	students[id].Name = u.Name
+	return c.JSON(http.StatusOK, students[id])
 }
 
-func deleteUser(c *echo.Context) error {
+func deleteStudent(c *echo.Context) error {
 	lock.Lock()
 	defer lock.Unlock()
 	id, _ := strconv.Atoi(c.Param("id"))
-	delete(users, id)
+	delete(students, id)
 	return c.NoContent(http.StatusNoContent)
 }
 
-func getAllUsers(c *echo.Context) error {
+func getStudents(c *echo.Context) error {
 	lock.Lock()
 	defer lock.Unlock()
-	return c.JSON(http.StatusOK, users)
+	return c.JSON(http.StatusOK, students)
 }
 
 func main() {
@@ -82,11 +84,11 @@ func main() {
 	e.Use(middleware.Recover())
 
 	// Routes
-	e.GET("/users", getAllUsers)
-	e.POST("/users", createUser)
-	e.GET("/users/:id", getUser)
-	e.PUT("/users/:id", updateUser)
-	e.DELETE("/users/:id", deleteUser)
+	e.GET("/students", getStudents)
+	e.POST("/students", createStudent)
+	e.GET("/students/:id", getStudent)
+	e.PUT("/students/:id", updateStudent)
+	e.DELETE("/students/:id", deleteStudent)
 
 	// Start server
 	sc := echo.StartConfig{Address: ":8080"}
