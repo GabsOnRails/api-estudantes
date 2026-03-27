@@ -29,18 +29,20 @@ var (
 //----------
 
 func createStudent(c *echo.Context) error {
-	db.AddStudent()
-	lock.Lock()
-	defer lock.Unlock()
-	u := &user{
-		ID: seq,
-	}
-	if err := c.Bind(u); err != nil {
+	student := db.Student{}
+
+	if err := c.Bind(&student); err != nil {
 		return err
 	}
-	students[u.ID] = u
-	seq++
-	return c.JSON(http.StatusCreated, u)
+
+	err := db.AddStudent(student)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Error to create student",
+		})
+	}
+
+	return c.JSON(http.StatusCreated, student)
 }
 
 func getStudent(c *echo.Context) error {
