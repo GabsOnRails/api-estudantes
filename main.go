@@ -73,8 +73,12 @@ func deleteStudent(c *echo.Context) error {
 }
 
 func getStudents(c *echo.Context) error {
-	lock.Lock()
-	defer lock.Unlock()
+	students, err := db.GetStudents()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Error to get students",
+		})
+	}
 	return c.JSON(http.StatusOK, students)
 }
 

@@ -39,3 +39,14 @@ func AddStudent(student Student) error {
 	fmt.Println("Sucessuful! Student created.")
 	return nil
 }
+
+func GetStudents() ([]Student, error) {
+	students := []Student{}
+
+	db, err := Init()
+	if err != nil {
+		return nil, err
+	}
+	err = db.Find(&students).Error
+	return students, err
+}
