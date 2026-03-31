@@ -8,12 +8,11 @@ import (
 	"github.com/GabsOnRails/api-estudantes/db"
 	"github.com/labstack/echo/v5"
 	"github.com/labstack/echo/v5/middleware"
-	"gorm.io/gorm"
 )
 
 type API struct {
 	Echo *echo.Echo
-	DB   *gorm.DB
+	DB   *db.StudentHandler
 }
 
 type (
@@ -40,10 +39,11 @@ func NewServer() *API {
 	if err != nil {
 		panic(err)
 	}
+	studentDB := db.NewStudentHandler(database)
 
 	return &API{
 		Echo: e,
-		DB:   database,
+		DB:   studentDB,
 	}
 
 }
@@ -55,25 +55,25 @@ func (api *API) StartServer() error {
 
 func (api *API) ConfigureRoutes() {
 	// Routes
-	api.Echo.GET("/students", getStudents)
-	api.Echo.POST("/students", createStudent)
-	api.Echo.GET("/students/:id", getStudent)
-	api.Echo.PUT("/students/:id", updateStudent)
-	api.Echo.DELETE("/students/:id", deleteStudent)
+	api.Echo.GET("/students", api.getStudents)
+	api.Echo.POST("/students", api.createStudent)
+	api.Echo.GET("/students/:id", api.getStudent)
+	api.Echo.PUT("/students/:id", api.updateStudent)
+	api.Echo.DELETE("/students/:id", api.deleteStudent)
 }
 
 //----------
 // Handlers
 //----------
 
-func createStudent(c *echo.Context) error {
+func (api *API) createStudent(c *echo.Context) error {
 	student := db.Student{}
 
 	if err := c.Bind(&student); err != nil {
 		return err
 	}
 
-	err := db.AddStudent(student)
+	err := api.DB.AddStudent(student)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Error to create student",
@@ -83,14 +83,14 @@ func createStudent(c *echo.Context) error {
 	return c.JSON(http.StatusCreated, student)
 }
 
-func getStudent(c *echo.Context) error {
+func (api *API) getStudent(c *echo.Context) error {
 	lock.Lock()
 	defer lock.Unlock()
 	id, _ := strconv.Atoi(c.Param("id"))
 	return c.JSON(http.StatusOK, students[id])
 }
 
-func updateStudent(c *echo.Context) error {
+func (api *API) updateStudent(c *echo.Context) error {
 	lock.Lock()
 	defer lock.Unlock()
 	u := new(user)
@@ -102,7 +102,7 @@ func updateStudent(c *echo.Context) error {
 	return c.JSON(http.StatusOK, students[id])
 }
 
-func deleteStudent(c *echo.Context) error {
+func (api *API) deleteStudent(c *echo.Context) error {
 	lock.Lock()
 	defer lock.Unlock()
 	id, _ := strconv.Atoi(c.Param("id"))
@@ -110,8 +110,8 @@ func deleteStudent(c *echo.Context) error {
 	return c.NoContent(http.StatusNoContent)
 }
 
-func getStudents(c *echo.Context) error {
-	students, err := db.GetStudents()
+func (api *API) getStudents(c *echo.Context) error {
+	students, err := api.DB.GetStudents()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Error to get students",
