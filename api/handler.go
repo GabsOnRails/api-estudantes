@@ -48,15 +48,52 @@ func (api *API) getStudent(c *echo.Context) error {
 }
 
 func (api *API) updateStudent(c *echo.Context) error {
-	lock.Lock()
-	defer lock.Unlock()
-	u := new(user)
-	if err := c.Bind(u); err != nil {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid student ID",
+		})
+	}
+
+	receivedStudent := db.Student{}
+	if err := c.Bind(&receivedStudent); err != nil {
 		return err
 	}
-	id, _ := strconv.Atoi(c.Param("id"))
-	students[id].Name = u.Name
-	return c.JSON(http.StatusOK, students[id])
+
+	updatingStudent, err := api.DB.GetStudent(id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Error to get student",
+		})
+	}
+	updatingStudent = updateStudentInfo(receivedStudent, updatingStudent)
+	if err := api.DB.UpdateStudent(updatingStudent); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Error to update student",
+		})
+	}
+
+	return c.JSON(http.StatusOK, updatingStudent)
+
+}
+
+func updateStudentInfo(receivedStudent, updatingStudent db.Student) db.Student {
+	if receivedStudent.Name != "" {
+		updatingStudent.Name = receivedStudent.Name
+	}
+	if receivedStudent.CPF != 0 {
+		updatingStudent.CPF = receivedStudent.CPF
+	}
+	if receivedStudent.Email != "" {
+		updatingStudent.Email = receivedStudent.Email
+	}
+	if receivedStudent.Age != 0 {
+		updatingStudent.Age = receivedStudent.Age
+	}
+	if receivedStudent.Active != updatingStudent.Active {
+		updatingStudent.Active = receivedStudent.Active
+	}
+	return updatingStudent
 }
 
 func (api *API) deleteStudent(c *echo.Context) error {

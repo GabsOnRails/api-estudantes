@@ -58,3 +58,7 @@ func (s *StudentHandler) GetStudents() ([]Student, error) {
 	return students, err
 
 }
+
+func (s *StudentHandler) UpdateStudent(updatingStudent Student) error {
+	return s.DB.Save(&updatingStudent).Error
+}
