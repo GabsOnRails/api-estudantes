@@ -42,13 +42,19 @@ func (s *StudentHandler) AddStudent(student Student) error {
 	return nil
 }
 
+func (s *StudentHandler) GetStudent(id int) (Student, error) {
+	var student Student
+	err := s.DB.First(&student, id)
+	// err := s.DB.Find(&students).Error
+	// if err != nil {
+	// 	return nil, err
+	// }
+	return student, err.Error
+}
+
 func (s *StudentHandler) GetStudents() ([]Student, error) {
 	students := []Student{}
-
 	err := s.DB.Find(&students).Error
-	if err != nil {
-		return nil, err
-	}
+	return students, err
 
-	return students, nil
 }

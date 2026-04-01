@@ -30,10 +30,21 @@ func (api *API) createStudent(c *echo.Context) error {
 }
 
 func (api *API) getStudent(c *echo.Context) error {
-	lock.Lock()
-	defer lock.Unlock()
-	id, _ := strconv.Atoi(c.Param("id"))
-	return c.JSON(http.StatusOK, students[id])
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid student ID",
+		})
+	}
+
+	student, err := api.DB.GetStudent(id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Error to get student",
+		})
+	}
+
+	return c.JSON(http.StatusOK, student)
 }
 
 func (api *API) updateStudent(c *echo.Context) error {
