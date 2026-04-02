@@ -62,3 +62,7 @@ func (s *StudentHandler) GetStudents() ([]Student, error) {
 func (s *StudentHandler) UpdateStudent(updatingStudent Student) error {
 	return s.DB.Save(&updatingStudent).Error
 }
+
+func (s *StudentHandler) DeleteStudent(student Student) error {
+	return s.DB.Delete(&student).Error
+}

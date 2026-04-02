@@ -97,11 +97,27 @@ func updateStudentInfo(receivedStudent, updatingStudent db.Student) db.Student {
 }
 
 func (api *API) deleteStudent(c *echo.Context) error {
-	lock.Lock()
-	defer lock.Unlock()
-	id, _ := strconv.Atoi(c.Param("id"))
-	delete(students, id)
-	return c.NoContent(http.StatusNoContent)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid student ID",
+		})
+	}
+	student, err := api.DB.GetStudent(id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Student not found",
+		})
+	}
+
+	if err := api.DB.DeleteStudent(student); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to delete student",
+		})
+	}
+
+	return c.JSON(http.StatusOK, student)
+
 }
 
 func (api *API) getStudents(c *echo.Context) error {
