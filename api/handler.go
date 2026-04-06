@@ -141,5 +141,9 @@ func (api *API) getStudents(c *echo.Context) error {
 			"error": "Error to get students",
 		})
 	}
-	return c.JSON(http.StatusOK, students)
+
+	listOfStudents := map[string][]schemas.StudentResponse{
+		"students": schemas.NewResponseStudent(students),
+	}
+	return c.JSON(http.StatusOK, listOfStudents)
 }
